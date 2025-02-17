@@ -41,6 +41,10 @@ exports.handler = async (event, context) => {
       throw new Error('Missing required environment variables');
     }
 
+    // Test credentials (for sandbox testing only)
+    const APP_ID = "TEST1234567890123456789012345";
+    const SECRET_KEY = "TESTf6216fe0e3665d13c92c9310961fe9d9_44247deb";
+
     // Generate order details
     const orderId = `order_${Date.now()}`;
     const orderAmount = 2; // Fixed amount for testing
@@ -71,8 +75,8 @@ exports.handler = async (event, context) => {
       method: 'post',
       url: apiUrl,
       headers: {
-        'x-client-id': process.env.APP_ID,
-        'x-client-secret': process.env.SECRET_KEY,
+        'x-client-id': APP_ID,
+        'x-client-secret': SECRET_KEY,
         'x-api-version': '2022-09-01',
         'Content-Type': 'application/json'
       },
