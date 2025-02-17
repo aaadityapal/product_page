@@ -29,22 +29,17 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Validate environment variables
+    // Log environment variables (safely)
+    console.log('Environment check:', {
+      hasAppId: Boolean(process.env.APP_ID),
+      hasSecretKey: Boolean(process.env.SECRET_KEY),
+      appIdFirstChars: process.env.APP_ID?.substring(0, 4),
+      env: process.env.CASHFREE_ENV || 'Not set'
+    });
+
     if (!process.env.APP_ID || !process.env.SECRET_KEY) {
-      console.error('Missing environment variables:', {
-        APP_ID: !!process.env.APP_ID,
-        SECRET_KEY: !!process.env.SECRET_KEY
-      });
       throw new Error('Missing required environment variables');
     }
-
-    // Log environment check
-    console.log('Environment check:', {
-      hasAppId: !!process.env.APP_ID,
-      hasSecretKey: !!process.env.SECRET_KEY,
-      appIdLength: process.env.APP_ID?.length,
-      secretKeyLength: process.env.SECRET_KEY?.length
-    });
 
     // Generate order details
     const orderId = `order_${Date.now()}`;
@@ -66,12 +61,15 @@ exports.handler = async (event, context) => {
       }
     };
 
-    // Log the request we're about to make
-    console.log('Making request to Cashfree');
+    // Use sandbox URL for testing
+    const apiUrl = 'https://sandbox.cashfree.com/pg/orders';
+    
+    console.log('Making request to:', apiUrl);
+    console.log('Request payload:', JSON.stringify(payload));
 
     const response = await axios({
       method: 'post',
-      url: 'https://api.cashfree.com/pg/orders',
+      url: apiUrl,
       headers: {
         'x-client-id': process.env.APP_ID,
         'x-client-secret': process.env.SECRET_KEY,
@@ -81,41 +79,39 @@ exports.handler = async (event, context) => {
       data: payload
     });
 
-    console.log('Cashfree response received');
-
-    const responseBody = {
-      success: true,
-      payment_session_id: response.data.payment_session_id,
-      order_id: orderId
-    };
-
-    // Log what we're sending back
-    console.log('Sending response:', responseBody);
+    console.log('Cashfree response:', {
+      status: response.status,
+      data: response.data
+    });
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(responseBody)
+      body: JSON.stringify({
+        success: true,
+        payment_session_id: response.data.payment_session_id,
+        order_id: orderId,
+        cfResponse: response.data
+      })
     };
 
   } catch (error) {
-    // Log error details
-    console.error('Error details:', {
+    console.error('Detailed error:', {
       message: error.message,
       response: error.response?.data,
-      status: error.response?.status
+      status: error.response?.status,
+      headers: error.response?.headers
     });
 
-    const errorResponse = {
-      success: false,
-      error: 'Failed to create order',
-      message: error.response?.data?.message || error.message
-    };
-
     return {
-      statusCode: 500,
+      statusCode: error.response?.status || 500,
       headers,
-      body: JSON.stringify(errorResponse)
+      body: JSON.stringify({
+        success: false,
+        error: 'Failed to create order',
+        message: error.response?.data?.message || error.message,
+        details: error.response?.data
+      })
     };
   }
 }; 
