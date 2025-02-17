@@ -42,8 +42,8 @@ exports.handler = async (event, context) => {
     }
 
     // Test credentials (for sandbox testing only)
-    const APP_ID = "TEST1234567890123456789012345";
-    const SECRET_KEY = "TESTf6216fe0e3665d13c92c9310961fe9d9_44247deb";
+    const APP_ID = "TEST100531183c7fe9ef3c837add98c781135001";
+    const SECRET_KEY = "TEST3bebdc90edabe121944ccc785912841d3dd47864";
 
     // Generate order details
     const orderId = `order_${Date.now()}`;
